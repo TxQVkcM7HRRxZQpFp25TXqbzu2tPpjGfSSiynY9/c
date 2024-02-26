@@ -1,7 +1,7 @@
 #include <stdio.h>
 
 int main() {
-    char name[100];y
+    char name[100];
 
     printf("Wpisz swoje imię: ");
 
