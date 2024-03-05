@@ -1,39 +1,42 @@
 #include <stdio.h>
 
-struct Point {
+typedef struct {
     float x;
     float y;
-};
+} Punkt;
 
-void zmienWspolrzedne(struct Point *p, float nowyX, float nowyY) {
-    p->x = nowyX;
-    p->y = nowyY;
+typedef struct {
+    Punkt lewyGorny;
+    Punkt prawyDolny;
+} Prostokat;
+
+void zmienWspolrzedne(Punkt *punkt, float noweX, float noweY) {
+    punkt->x = noweX;
+    punkt->y = noweY;
 }
 
-struct Rectangle {
-    struct Point topleft;
-    struct Point bottomright;
-};
-
-float poleProstokata(struct Rectangle *rect) {
-    float szerokosc = rect->bottomright.x - rect->topleft.x;
-    float wysokosc = rect->topleft.y - rect->bottomright.y;
-    return szerokosc * wysokosc;
-}
-
-float obwodProstokata(struct Rectangle *rect) {
-    float szerokosc = rect->bottomright.x - rect->topleft.x;
-    float wysokosc = rect->topleft.y - rect->bottomright.y;
-    return 2 * (szerokosc + wysokosc);
+void oblicz(Prostokat prostokat, float *pole, float *obwod) {
+    float szerokosc = prostokat.prawyDolny.x - prostokat.lewyGorny.x;
+    float wysokosc = prostokat.lewyGorny.y - prostokat.prawyDolny.y;
+    *pole = szerokosc * wysokosc;
+    *obwod = 2 * (szerokosc + wysokosc);
 }
 
 int main() {
-    struct Point punkt = {2.5, 3.5};
-    zmienWspolrzedne(&punkt, 5.0, 7.0);
-    printf("Nowe współrzędne punktu: (%.2f, %.2f)\n", punkt.x, punkt.y);
-    struct Rectangle prostokat = {{1.0, 4.0}, {6.0, 1.0}};
-    printf("Pole prostokąta: %.2f\n", poleProstokata(&prostokat));
-    printf("Obwód prostokąta: %.2f\n", obwodProstokata(&prostokat));
+    Punkt punkt = {2.5, 3.0};
+    zmienWspolrzedne(&punkt, 4.0, 5.5);
+    printf("Nowe wspolrzedne punktu: (%.2f, %.2f)\n", punkt.x, punkt.y);
+
+    Prostokat prostokat = {
+        {1.0, 4.0},
+        {5.0, 1.0}
+    };
+
+    float pole, obwod;
+    oblicz(prostokat, &pole, &obwod);
+
+    printf("Pole prostokata: %.2f\n", pole);
+    printf("Obwod prostokata: %.2f\n", obwod);
 
     return 0;
 }
