@@ -25,7 +25,6 @@ int main() {
     int array[] = {1, 2, 3};
     int n = sizeof(array) / sizeof(array[0]);
 
-    printf("Permutacje ciągu: \n");
     permute(array, 0, n - 1);
 
     return 0;
