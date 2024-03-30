@@ -1,51 +1,41 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-typedef struct Element {
-    int wartosc;
+struct Element {
+    int dane;
     struct Element* nastepny;
-} Element;
+};
 
-void add_first(Element** glowa, int wartosc) {
-    Element* nowy_element = (Element*)malloc(sizeof(Element));
+void add_first(struct Element** glowa_ref, int nowe_dane) {
+    struct Element* nowy_element = (struct Element*)malloc(sizeof(struct Element));
     if (nowy_element == NULL) {
         printf("Błąd alokacji pamięci\n");
-        exit(EXIT_FAILURE);
+        return;
     }
-    nowy_element->wartosc = wartosc;
-    nowy_element->nastepny = *glowa;
-    *glowa = nowy_element;
+    
+    nowy_element->dane = nowe_dane;
+    
+    nowy_element->nastepny = *glowa_ref;
+    
+    *glowa_ref = nowy_element;
 }
 
-void wyswietl_liste(Element* glowa) {
-    Element* aktualny = glowa;
-    while (aktualny != NULL) {
-        printf("%d -> ", aktualny->wartosc);
-        aktualny = aktualny->nastepny;
+void drukuj_liste(struct Element* element) {
+    while (element != NULL) {
+        printf("%d ", element->dane);
+        element = element->nastepny;
     }
-    printf("NULL\n");
-}
-
-void zwolnij_liste(Element* glowa) {
-    Element* aktualny = glowa;
-    while (aktualny != NULL) {
-        Element* temp = aktualny;
-        aktualny = aktualny->nastepny;
-        free(temp);
-    }
+    printf("\n");
 }
 
 int main() {
-    Element* glowa = NULL;
-
+    struct Element* glowa = NULL;
+    
     add_first(&glowa, 3);
+    add_first(&glowa, 5);
     add_first(&glowa, 7);
-    add_first(&glowa, 11);
-
-    printf("Lista: ");
-    wyswietl_liste(glowa);
-
-    zwolnij_liste(glowa);
-
+    
+    drukuj_liste(glowa);
+    
     return 0;
 }
