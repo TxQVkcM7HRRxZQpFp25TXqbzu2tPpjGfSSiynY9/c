@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+// Function to convert number words to digits
 int word_to_digit(const char* word) {
     if (strcmp(word, "one") == 0) return 1;
     else if (strcmp(word, "two") == 0) return 2;
@@ -12,63 +13,54 @@ int word_to_digit(const char* word) {
     else if (strcmp(word, "seven") == 0) return 7;
     else if (strcmp(word, "eight") == 0) return 8;
     else if (strcmp(word, "nine") == 0) return 9;
-    return -1;
+    return -1;  // Not a number word
 }
 
-void convert_words_to_digits(char* line) {
-    char* result = malloc(strlen(line) + 1);
-    char* token, * original = line, * res_ptr = result;
-    int digit;
+// Function to find the first and last digit in a string
+int process_line(char* line) {
+    int first = -1, last = -1, digit;
+    char* token;
+    const char* delimiters = " ,;.!?-\n";
 
-    token = strtok(line, " ,.-");
+    token = strtok(line, delimiters);
     while (token != NULL) {
-        digit = word_to_digit(token);
-        if (digit != -1) {
-            *res_ptr++ = '0' + digit;
+        if (sscanf(token, "%d", &digit) == 1) {  // Check if it's a direct digit
+            if (first == -1) first = digit % 10;
+            last = digit % 10;
         }
         else {
-            while (*token) {
-                *res_ptr++ = *token++;
+            digit = word_to_digit(token);  // Convert word to digit if applicable
+            if (digit != -1) {
+                if (first == -1) first = digit;
+                last = digit;
             }
         }
-        token = strtok(NULL, " ,.-");
+        token = strtok(NULL, delimiters);
     }
-    *res_ptr = '\0';
-    strcpy(original, result);
-    free(result);
+
+    if (first != -1 && last != -1) {
+        return first * 10 + last;
+    }
+    return 0;
 }
 
 int main() {
-    FILE* file = fopen("input.txt", "r");
-    char line[256];
-    int total = 0;
+    FILE* file;
+    char line[1024];
+    int sum = 0;
 
-    if (file == NULL) {
-        printf("Nie udało się otworzyć pliku.\n");
+    file = fopen("input.txt", "r");
+    if (!file) {
+        printf("File could not be opened.\n");
         return 1;
     }
 
     while (fgets(line, sizeof(line), file)) {
-        char* ptr = line;
-        int first_digit = -1, last_digit = -1;
-
-        convert_words_to_digits(line);
-
-        while (*ptr) {
-            if (*ptr >= '0' && *ptr <= '9') {
-                if (first_digit == -1) first_digit = *ptr - '0';
-                last_digit = *ptr - '0';
-            }
-            ptr++;
-        }
-
-        if (first_digit != -1 && last_digit != -1) {
-            total += first_digit * 10 + last_digit;
-        }
+        sum += process_line(line);
     }
 
     fclose(file);
-    printf("Całkowita wartość energii: %d\n", total);
 
+    printf("Total sum of energy values is: %d\n", sum);
     return 0;
 }
