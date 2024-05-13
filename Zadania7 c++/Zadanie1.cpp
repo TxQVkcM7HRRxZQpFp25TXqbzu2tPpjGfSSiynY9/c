@@ -34,7 +34,7 @@ int main() {
     auto word_to_digit = create_word_to_digit_map();
 
     if (!file) {
-        std::cerr << "File could not be opened." << std::endl;
+        std::cerr << "Nie udało się otworzyć pliku." << std::endl;
         return 1;
     }
 
@@ -55,6 +55,6 @@ int main() {
     }
 
     file.close();
-    std::cout << "Total energy value: " << total << std::endl;
+    std::cout << "Calkowita wartosc energii: " << total << std::endl;
     return 0;
 }
