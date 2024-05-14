@@ -1,60 +1,68 @@
 #include <iostream>
 #include <fstream>
-#include <sstream>
-#include <map>
 #include <string>
+#include <cctype>
+#include <unordered_map>
 
-std::map<std::string, int> create_word_to_digit_map() {
-    return {
-        {"one", 1}, {"two", 2}, {"three", 3},
-        {"four", 4}, {"five", 5}, {"six", 6},
-        {"seven", 7}, {"eight", 8}, {"nine", 9}
+int word_to_digit(const std::string& word) {
+    static const std::unordered_map<std::string, int> word_to_digit_map = {
+        {"one", 1}, {"two", 2}, {"three", 3}, {"four", 4},
+        {"five", 5}, {"six", 6}, {"seven", 7}, {"eight", 8}, {"nine", 9}
     };
+    auto it = word_to_digit_map.find(word);
+    return (it != word_to_digit_map.end()) ? it->second : -1;
 }
 
-std::string convert_words_to_digits(const std::string& line, const std::map<std::string, int>& word_to_digit) {
-    std::istringstream iss(line);
-    std::string token;
-    std::string result = "";
-    while (iss >> token) {
-        if (word_to_digit.find(token) != word_to_digit.end()) {
-            result += std::to_string(word_to_digit.at(token));
+void extract_digits(const std::string& line, int& first_digit, int& last_digit) {
+    first_digit = -1;
+    last_digit = -1;
+    std::string word;
+
+    for (size_t i = 0; i < line.length(); ++i) {
+        if (isdigit(line[i])) {
+            int digit = line[i] - '0';
+            if (first_digit == -1) first_digit = digit;
+            last_digit = digit;
+        }
+        else if (isalpha(line[i])) {
+            word += line[i];
+            if (word.length() >= 3) {
+                int digit = word_to_digit(word);
+                if (digit != -1) {
+                    if (first_digit == -1) first_digit = digit;
+                    last_digit = digit;
+                    word.clear();
+                }
+            }
         }
         else {
-            result += token;
+            word.clear();
         }
     }
-    return result;
 }
 
 int main() {
     std::ifstream file("input.txt");
-    std::string line;
-    int total = 0;
-    auto word_to_digit = create_word_to_digit_map();
-
     if (!file) {
-        std::cerr << "Nie udało się otworzyć pliku." << std::endl;
+        std::cerr << "Could not open file\n";
         return 1;
     }
 
-    while (getline(file, line)) {
-        std::string processed_line = convert_words_to_digits(line, word_to_digit);
-        int first_digit = -1, last_digit = -1;
+    std::string line;
+    int total_sum = 0;
 
-        for (char ch : processed_line) {
-            if (isdigit(ch)) {
-                if (first_digit == -1) first_digit = ch - '0';
-                last_digit = ch - '0';
-            }
-        }
-
+    while (std::getline(file, line)) {
+        int first_digit, last_digit;
+        extract_digits(line, first_digit, last_digit);
         if (first_digit != -1 && last_digit != -1) {
-            total += first_digit * 10 + last_digit;
+            int number = first_digit * 10 + last_digit;
+            total_sum += number;
         }
     }
 
     file.close();
-    std::cout << "Calkowita wartosc energii: " << total << std::endl;
+
+    std::cout << "Total sum: " << total_sum << std::endl;
+
     return 0;
 }
