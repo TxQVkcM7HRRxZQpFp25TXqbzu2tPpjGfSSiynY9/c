@@ -1,11 +1,10 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <ctype.h>
 
-#define MAX_LINE_LENGTH 256
+#define MAX_LINE_LENGTH 100
 
-// Function to convert word to digit
 int word_to_digit(const char* word) {
     if (strcmp(word, "one") == 0) return 1;
     if (strcmp(word, "two") == 0) return 2;
@@ -19,42 +18,42 @@ int word_to_digit(const char* word) {
     return -1;
 }
 
-// Function to extract digits from a line
-void extract_digits(const char* line, int* first_digit, int* last_digit) {
-    *first_digit = -1;
-    *last_digit = -1;
-    int len = strlen(line);
-    char word[MAX_LINE_LENGTH];
-    int word_index = 0;
-
-    for (int i = 0; i < len; i++) {
+int find_first_digit(const char* line) {
+    const char* words[] = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+    for (int i = 0; i < strlen(line); ++i) {
         if (isdigit(line[i])) {
-            int digit = line[i] - '0';
-            if (*first_digit == -1) *first_digit = digit;
-            *last_digit = digit;
+            return line[i] - '0';
         }
-        else if (isalpha(line[i])) {
-            word[word_index++] = line[i];
-            word[word_index] = '\0';
-            if (word_index >= 3) {
-                int digit = word_to_digit(word);
-                if (digit != -1) {
-                    if (*first_digit == -1) *first_digit = digit;
-                    *last_digit = digit;
-                    word_index = 0;
-                }
+        for (int j = 0; j < 9; ++j) {
+            int len = strlen(words[j]);
+            if (strncmp(line + i, words[j], len) == 0) {
+                return word_to_digit(words[j]);
             }
         }
-        else {
-            word_index = 0; // reset word index if non-alphabetic character found
+    }
+    return -1;
+}
+
+int find_last_digit(const char* line) {
+    const char* words[] = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+    for (int i = strlen(line) - 1; i >= 0; --i) {
+        if (isdigit(line[i])) {
+            return line[i] - '0';
+        }
+        for (int j = 0; j < 9; ++j) {
+            int len = strlen(words[j]);
+            if (i - len + 1 >= 0 && strncmp(line + i - len + 1, words[j], len) == 0) {
+                return word_to_digit(words[j]);
+            }
         }
     }
+    return -1;
 }
 
 int main() {
     FILE* file = fopen("input.txt", "r");
     if (!file) {
-        fprintf(stderr, "Could not open file\n");
+        perror("Failed to open file");
         return 1;
     }
 
@@ -62,17 +61,18 @@ int main() {
     int total_sum = 0;
 
     while (fgets(line, sizeof(line), file)) {
-        int first_digit, last_digit;
-        extract_digits(line, &first_digit, &last_digit);
+        line[strcspn(line, "\n")] = '\0';
+
+        int first_digit = find_first_digit(line);
+        int last_digit = find_last_digit(line);
+
         if (first_digit != -1 && last_digit != -1) {
-            int number = first_digit * 10 + last_digit;
-            total_sum += number;
+            int energy_value = first_digit * 10 + last_digit;
+            total_sum += energy_value;
         }
     }
 
     fclose(file);
-
-    printf("Total sum: %d\n", total_sum);
-
+    printf("Total sum of energy values: %d\n", total_sum);
     return 0;
 }
