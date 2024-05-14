@@ -1,92 +1,78 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
 
-#define MAX_LINE_LENGTH 512
+#define MAX_LINE_LENGTH 100
 
-typedef struct {
-    int red;
-    int green;
-    int blue;
-} DiceSet;
-
-// Function to parse the dice counts from a given string and update the DiceSet structure
-void parse_dice(const char *str, DiceSet *set) {
-    set->red = 0;
-    set->green = 0;
-    set->blue = 0;
-    char color[10];
-    int count;
-    const char *ptr = str;
-    while (sscanf(ptr, "%d %9s", &count, color) == 2) {
-        if (strstr(color, "red")) set->red += count;
-        if (strstr(color, "green")) set->green += count;
-        if (strstr(color, "blue")) set->blue += count;
-        ptr = strstr(ptr, ";");
-        if (ptr) ptr++;
-        else break;
-    }
+int word_to_digit(const char* word) {
+    if (strcmp(word, "one") == 0) return 1;
+    if (strcmp(word, "two") == 0) return 2;
+    if (strcmp(word, "three") == 0) return 3;
+    if (strcmp(word, "four") == 0) return 4;
+    if (strcmp(word, "five") == 0) return 5;
+    if (strcmp(word, "six") == 0) return 6;
+    if (strcmp(word, "seven") == 0) return 7;
+    if (strcmp(word, "eight") == 0) return 8;
+    if (strcmp(word, "nine") == 0) return 9;
+    return -1;
 }
 
-// Function to check if a game is possible given the maximum number of dice available
-int is_possible_game(const DiceSet *max_set, const DiceSet *game_sets, int num_sets) {
-    for (int i = 0; i < num_sets; i++) {
-        if (game_sets[i].red > max_set->red || game_sets[i].green > max_set->green || game_sets[i].blue > max_set->blue) {
-            return 0;
+int find_first_digit(const char* line) {
+    const char* words[] = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+    for (int i = 0; i < strlen(line); ++i) {
+        if (isdigit(line[i])) {
+            return line[i] - '0';
+        }
+        for (int j = 0; j < 9; ++j) {
+            int len = strlen(words[j]);
+            if (strncmp(line + i, words[j], len) == 0) {
+                return word_to_digit(words[j]);
+            }
         }
     }
-    return 1;
+    return -1;
+}
+
+int find_last_digit(const char* line) {
+    const char* words[] = { "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+    for (int i = strlen(line) - 1; i >= 0; --i) {
+        if (isdigit(line[i])) {
+            return line[i] - '0';
+        }
+        for (int j = 0; j < 9; ++j) {
+            int len = strlen(words[j]);
+            if (i - len + 1 >= 0 && strncmp(line + i - len + 1, words[j], len) == 0) {
+                return word_to_digit(words[j]);
+            }
+        }
+    }
+    return -1;
 }
 
 int main() {
-    FILE *file = fopen("input_2.txt", "r");
+    FILE* file = fopen("input.txt", "r");
     if (!file) {
-        perror("Could not open file");
+        perror("Failed to open file");
         return 1;
     }
 
     char line[MAX_LINE_LENGTH];
-    DiceSet max_set = {12, 13, 14};
-    int possible_sum = 0;
-    long long power_sum = 0;
+    int total_sum = 0;
 
-    // Read each line from the input file and process it
     while (fgets(line, sizeof(line), file)) {
-        int game_id;
-        DiceSet game_sets[100];
-        int num_sets = 0;
+        line[strcspn(line, "\n")] = '\0';
 
-        char *ptr = strtok(line, ":");
-        if (ptr) sscanf(ptr, "Game %d", &game_id);
+        int first_digit = find_first_digit(line);
+        int last_digit = find_last_digit(line);
 
-        ptr = strtok(NULL, ":");
-        if (ptr) {
-            while ((ptr = strtok(ptr, ";")) != NULL) {
-                parse_dice(ptr, &game_sets[num_sets++]);
-                ptr = NULL;
-            }
+        if (first_digit != -1 && last_digit != -1) {
+            int energy_value = first_digit * 10 + last_digit;
+            total_sum += energy_value;
         }
-
-        // Check if the game is possible with the given max set of dice
-        if (is_possible_game(&max_set, game_sets, num_sets)) {
-            possible_sum += game_id;
-        }
-
-        // Find the minimum number of each color dice required for the game
-        int min_red = 0, min_green = 0, min_blue = 0;
-        for (int i = 0; i < num_sets; i++) {
-            if (game_sets[i].red > min_red) min_red = game_sets[i].red;
-            if (game_sets[i].green > min_green) min_green = game_sets[i].green;
-            if (game_sets[i].blue > min_blue) min_blue = game_sets[i].blue;
-        }
-        power_sum += (long long)min_red * min_green * min_blue;
     }
 
     fclose(file);
-
-    // Output the results
-    printf("Sum of possible game IDs: %d\n", possible_sum);
-    printf("Sum of powers of minimum sets: %lld\n", power_sum);
-
+    printf("Total sum of energy values: %d\n", total_sum);
     return 0;
 }
