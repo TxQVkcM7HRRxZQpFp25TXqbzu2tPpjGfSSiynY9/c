@@ -1,78 +1,88 @@
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-#include <ctype.h>
+#include <string.h>
 
-#define MAX_LINE_LENGTH 256
+#define MAX_LINE_LENGTH 1024
+#define MAX_SUBSETS 100
 
-// Function to convert word to digit
-int word_to_digit(const char* word) {
-    if (strcmp(word, "one") == 0) return 1;
-    if (strcmp(word, "two") == 0) return 2;
-    if (strcmp(word, "three") == 0) return 3;
-    if (strcmp(word, "four") == 0) return 4;
-    if (strcmp(word, "five") == 0) return 5;
-    if (strcmp(word, "six") == 0) return 6;
-    if (strcmp(word, "seven") == 0) return 7;
-    if (strcmp(word, "eight") == 0) return 8;
-    if (strcmp(word, "nine") == 0) return 9;
-    return -1;
-}
+typedef struct {
+    int red;
+    int green;
+    int blue;
+} DiceSet;
 
-// Function to extract digits from a line
-void extract_digits(const char* line, int* first_digit, int* last_digit) {
-    *first_digit = -1;
-    *last_digit = -1;
-    int len = strlen(line);
-    char word[MAX_LINE_LENGTH];
-    int word_index = 0;
-
-    for (int i = 0; i < len; i++) {
-        if (isdigit(line[i])) {
-            int digit = line[i] - '0';
-            if (*first_digit == -1) *first_digit = digit;
-            *last_digit = digit;
-        }
-        else if (isalpha(line[i])) {
-            word[word_index++] = line[i];
-            word[word_index] = '\0';
-            if (word_index >= 3) {
-                int digit = word_to_digit(word);
-                if (digit != -1) {
-                    if (*first_digit == -1) *first_digit = digit;
-                    *last_digit = digit;
-                    word_index = 0;
-                }
-            }
-        }
-        else {
-            word_index = 0; // reset word index if non-alphabetic character found
-        }
+void parse_dice(const char* str, DiceSet* set) {
+    set->red = 0;
+    set->green = 0;
+    set->blue = 0;
+    char color[10];
+    int count;
+    const char* ptr = str;
+    while (sscanf(ptr, "%d %9s", &count, color) == 2) {
+        if (strstr(color, "red")) set->red += count;
+        if (strstr(color, "green")) set->green += count;
+        if (strstr(color, "blue")) set->blue += count;
+        ptr = strstr(ptr, ",");
+        if (ptr) ptr++;
+        else break;
     }
 }
 
+int is_possible_game(const DiceSet* max_set, const DiceSet* game_sets, int num_sets) {
+    for (int i = 0; i < num_sets; i++) {
+        if (game_sets[i].red > max_set->red || game_sets[i].green > max_set->green || game_sets[i].blue > max_set->blue) {
+            return 0;
+        }
+    }
+    return 1;
+}
+
 int main() {
-    FILE* file = fopen("input.txt", "r");
+    FILE* file = fopen("input_2.txt", "r");
     if (!file) {
-        fprintf(stderr, "Could not open file\n");
+        perror("Could not open file");
         return 1;
     }
 
     char line[MAX_LINE_LENGTH];
-    int total_sum = 0;
+    DiceSet max_set = { 12, 13, 14 };
+    int possible_sum = 0;
+    long long power_sum = 0;
 
     while (fgets(line, sizeof(line), file)) {
-        int first_digit, last_digit;
-        extract_digits(line, &first_digit, &last_digit);
-        if (first_digit != -1 && last_digit != -1) {
-            int number = first_digit * 10 + last_digit;
-            total_sum += number;
+        int game_id;
+        DiceSet game_sets[MAX_SUBSETS];
+        int num_sets = 0;
+
+        char* ptr = strtok(line, ":");
+        if (ptr) sscanf(ptr, "Game %d", &game_id);
+
+        ptr = strtok(NULL, ":");
+        if (ptr) {
+            char* subset_ptr = strtok(ptr, ";");
+            while (subset_ptr) {
+                parse_dice(subset_ptr, &game_sets[num_sets++]);
+                subset_ptr = strtok(NULL, ";");
+            }
         }
+
+        if (is_possible_game(&max_set, game_sets, num_sets)) {
+            possible_sum += game_id;
+        }
+
+        int min_red = 0, min_green = 0, min_blue = 0;
+        for (int i = 0; i < num_sets; i++) {
+            if (game_sets[i].red > min_red) min_red = game_sets[i].red;
+            if (game_sets[i].green > min_green) min_green = game_sets[i].green;
+            if (game_sets[i].blue > min_blue) min_blue = game_sets[i].blue;
+        }
+        power_sum += (long long)min_red * min_green * min_blue;
     }
 
     fclose(file);
 
-    printf("Total sum: %d\n", total_sum);
+    printf("Sum of possible game IDs: %d\n", possible_sum);
+    printf("Sum of powers of minimum sets: %lld\n", power_sum);
 
     return 0;
 }
